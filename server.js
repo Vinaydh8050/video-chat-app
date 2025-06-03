@@ -6,27 +6,21 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, 'client')));
-
-let waiting = null;
+app.use(express.static(path.join(__dirname, 'client'))); // Serve all files from client directory
 
 io.on('connection', socket => {
   console.log('User connected:', socket.id);
 
   socket.on('join', () => {
-    if (waiting && waiting.id !== socket.id) {
-      const roomId = socket.id + '#' + waiting.id;
-      socket.join(roomId);
-      waiting.join(roomId);
-      socket.emit('room', roomId);
-      waiting.emit('room', roomId);
-      console.log(`Paired ${socket.id} with ${waiting.id}`);
-      waiting = null;
-    } else {
-      console.log(`${socket.id} is waiting for a partner.`);
-      waiting = socket;
+    const rooms = Array.from(io.sockets.adapter.rooms);
+    const available = rooms.find(([name, room]) => room.size === 1 && !room.has(socket.id));
+    const roomId = available ? available[0] : socket.id;
+
+    socket.join(roomId);
+    socket.emit('joined', roomId);
+    if (available) {
+      socket.to(roomId).emit('ready');
     }
   });
 
@@ -34,22 +28,19 @@ io.on('connection', socket => {
     socket.to(roomId).emit('signal', data);
   });
 
+  socket.on('disconnecting', () => {
+    for (const room of socket.rooms) {
+      if (room !== socket.id) {
+        socket.to(room).emit('leave');
+      }
+    }
+  });
+
   socket.on('leave', roomId => {
-    socket.to(roomId).emit('leave');
     socket.leave(roomId);
-    if (waiting && waiting.id === socket.id) {
-      waiting = null;
-    }
-  });
-
-  socket.on('disconnect', () => {
-    if (waiting && waiting.id === socket.id) {
-      waiting = null;
-    }
-    console.log('User disconnected:', socket.id);
+    socket.to(roomId).emit('leave');
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

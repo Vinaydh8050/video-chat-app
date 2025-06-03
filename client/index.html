@@ -1,21 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Random Video Chat</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Simple Video Chat</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Talk with a Stranger</h1>
-  <div id="videos">
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay muted playsinline></video>
-  </div>
-  <div id="controls">
-    <button id="startButton">Start Chat</button>
-    <button id="nextButton" disabled>Next Stranger</button>
-  </div>
+  <h2>Simple Video Chat</h2>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+  <br>
+  <button id="startBtn">Start Chat</button>
+  <button id="nextBtn" disabled>Next</button>
+
   <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
