@@ -2,28 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Video Stranger Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Random Video Chat</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Video Chat with Strangers</h1>
-    
-    <!-- AdSense Ad placeholder (replace with real code later) -->
-    <div class="ad" id="top-ad">
-      <p>Ad goes here</p>
-    </div>
-
-    <video id="remoteVideo" autoplay playsinline></video>
-    <video id="localVideo" autoplay playsinline muted></video>
-
-    <button id="startButton">Start Video Chat</button>
-    <button id="nextButton" disabled>Next</button>
+  <h1>Talk with a Stranger</h1>
+  <div id="videos">
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay muted playsinline></video>
   </div>
-
-  <!-- SimplePeer for WebRTC -->
-  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+  <div id="controls">
+    <button id="startButton">Start Chat</button>
+    <button id="nextButton" disabled>Next Stranger</button>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="script.js"></script>
 </body>
