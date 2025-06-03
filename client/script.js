@@ -10,23 +10,17 @@ let roomId = null;
 
 startButton.onclick = async () => {
   try {
-    // Request camera and mic access
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true
     });
-
-    // Show your video
     localVideo.srcObject = localStream;
 
-    // Join socket room
     socket.emit('join');
-
-    // Update button states
     startButton.disabled = true;
     nextButton.disabled = false;
   } catch (err) {
-    alert('Please allow access to your camera and microphone.');
+    alert('Please allow camera and microphone access.');
     console.error(err);
   }
 };
@@ -37,12 +31,12 @@ nextButton.onclick = () => {
     peer = null;
   }
   socket.emit('leave', roomId);
-  location.reload(); // reload to start fresh
+  location.reload();
 };
 
 socket.on('room', id => {
   roomId = id;
-  createPeer(true); // start peer connection
+  createPeer(true);
 });
 
 socket.on('signal', data => {
@@ -51,6 +45,10 @@ socket.on('signal', data => {
 });
 
 socket.on('leave', () => {
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
   alert('Stranger disconnected.');
   location.reload();
 });
@@ -62,26 +60,29 @@ function createPeer(initiator) {
     stream: localStream,
     config: {
       iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' } // Free STUN server
+        { urls: 'stun:stun.l.google.com:19302' }
       ]
     }
   });
 
-  // Send signaling data through socket
   peer.on('signal', data => {
     socket.emit('signal', { roomId, data });
   });
 
-  // When you get a remote stream, show it
-  peer.on('stream', stream => {
-    remoteVideo.srcObject = stream;
+  peer.on('stream', remoteStream => {
+    remoteVideo.srcObject = remoteStream;
+    remoteVideo.play().catch(err => console.error('Autoplay error:', err));
   });
 
-  peer.on('error', err => {
-    console.error('WebRTC error:', err);
+  peer.on('connect', () => {
+    console.log('Peer connection established');
   });
 
   peer.on('close', () => {
     console.log('Peer connection closed');
+  });
+
+  peer.on('error', err => {
+    console.error('Peer error:', err);
   });
 }
