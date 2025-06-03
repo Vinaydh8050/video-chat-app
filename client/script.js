@@ -4,20 +4,29 @@ const remoteVideo = document.getElementById('remoteVideo');
 const startButton = document.getElementById('startButton');
 const nextButton = document.getElementById('nextButton');
 
-let localStream;
-let peer;
-let roomId;
+let localStream = null;
+let peer = null;
+let roomId = null;
 
 startButton.onclick = async () => {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    // Request camera and mic access
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    // Show your video
     localVideo.srcObject = localStream;
 
+    // Join socket room
     socket.emit('join');
+
+    // Update button states
     startButton.disabled = true;
     nextButton.disabled = false;
   } catch (err) {
-    alert('Could not access your camera and microphone.');
+    alert('Please allow access to your camera and microphone.');
     console.error(err);
   }
 };
@@ -28,15 +37,15 @@ nextButton.onclick = () => {
     peer = null;
   }
   socket.emit('leave', roomId);
-  location.reload(); // simple reload to reset app and connect again
+  location.reload(); // reload to start fresh
 };
 
-socket.on('room', (room) => {
-  roomId = room;
-  createPeer(true);
+socket.on('room', id => {
+  roomId = id;
+  createPeer(true); // start peer connection
 });
 
-socket.on('signal', (data) => {
+socket.on('signal', data => {
   if (!peer) createPeer(false);
   peer.signal(data);
 });
@@ -49,23 +58,30 @@ socket.on('leave', () => {
 function createPeer(initiator) {
   peer = new SimplePeer({
     initiator,
-    stream: localStream,
     trickle: false,
+    stream: localStream,
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' } // Free STUN server
+      ]
+    }
   });
 
+  // Send signaling data through socket
   peer.on('signal', data => {
     socket.emit('signal', { roomId, data });
   });
 
+  // When you get a remote stream, show it
   peer.on('stream', stream => {
     remoteVideo.srcObject = stream;
   });
 
-  peer.on('close', () => {
-    console.log('Peer disconnected');
+  peer.on('error', err => {
+    console.error('WebRTC error:', err);
   });
 
-  peer.on('error', err => {
-    console.error('Peer error:', err);
+  peer.on('close', () => {
+    console.log('Peer connection closed');
   });
 }
